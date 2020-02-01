@@ -23,39 +23,20 @@ CMD=""
 inotifywait -m -e close_write,moved_to --format '%T %e %w %f' --timefmt '%Y%m%d-%H%M' -q --syslog --fromfile $FF |
 while read -r TIMESTAMP EVENT DIR FILE; do
 	case "$DIR" in
-		/var/log/glusterfs/bricks/)
+		$HOME/.minecraft/versions/1.15.2/)
 			case "$FILE" in
-				data-glusterfs-gvol1-brick1-brick.log | \
-				data-glusterfs-gvol1-brick1-brick.log.1)
-					# cerca la stringa che denota la caduta del servizio
-					echo "$TIMESTAMP ($EVENT): grep" >>$LF
-					CRASH=`grep -n crash ${DIR}${FILE}`
-					if [ "$CRASH" ];
-					then
-						declare -i N_CRA=`echo $CRASH|cut -d: -f1`
-						declare -i N_LOG=`wc -l ${DIR}${FILE}|cut -d" " -f1`
-						declare -i DELTA
-						(( DELTA = N_LOG - N_CRA ))
-						echo "$TIMESTAMP ($EVENT): CRASH=$CRASH - N_CRA=$N_CRA - N_LOG=$N_LOG - DELTA=$DELTA" >>$LF
-						# Il crash report è lungo 24-28 righe --> ci accertiamo che sia recente
-						if [ $DELTA -le 30 ];
-						then
-							# Riavviamo glusterd
-							CMD="systemctl restart glusterd.service"
-							echo "$TIMESTAMP ($EVENT): $CMD" >>$LF
-							$CMD &
-						else
-							echo "$TIMESTAMP ($EVENT): DELTA=$DELTA per cui il crash report è vecchio --> No-op" >>$LF
-						fi
-					fi
+				1.15.2-natives-*/)
+					# scopiazziamoci tutto sopra!
+					echo "$TIMESTAMP ($EVENT): cp" >>$LF
+					cp ./lwjgl3arm32/* $HOME/.minecraft/versions/1.15.2/${FILE}/
 					;;
 				*)
-					echo "$TIMESTAMP ($EVENT): File sconosciuto ${DIR}${FILE}" >>$LF
+					echo "$TIMESTAMP ($EVENT): Unknown file: ${DIR}${FILE}" >>$LF
 					;;
 			esac
 			;;
 		*)
-			echo "$TIMESTAMP ($EVENT): Directory sconosciuta $DIR" >>$LF
+			echo "$TIMESTAMP ($EVENT): Unmanaged directory: $DIR" >>$LF
 			;;
 	esac
 done
